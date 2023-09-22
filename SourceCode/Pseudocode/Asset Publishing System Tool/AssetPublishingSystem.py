@@ -1,6 +1,7 @@
 #Pseudocode for Asset Saving/Publishing Tool
 
 import maya.cmds as cmds
+from functools import partial
 
 def savePublishTool():
     
@@ -52,13 +53,16 @@ for x in xrange(1,10):
 # UI
 # =============================================================
 
-cmds.separator(h=2, backgroundColor = [0.5, 0.5, 0.5], style="single", annotation="buttons", width=cmds.getAttr('defaultResolution.width'))
-cmds.text(label='Save/Publish Tool', font="boldLabelFont", align='center', width=cmds.getAttr('defaultResolution.width'))
-cmds.separator(h=2, backgroundColor = [0.5, 0.5, 0.5], style="single", annotation="buttons", width=cmds.getAttr('defaultResolution.width'))
+def createUI():
+    cmds.separator(h=2, backgroundColor = [0.5, 0.5, 0.5], style="single", annotation="buttons", width=cmds.getAttr('defaultResolution.width'))
+    cmds.text(label='Save/Publish Tool', font="boldLabelFont", align='center', width=cmds.getAttr('defaultResolution.width'))
+    cmds.separator(h=2, backgroundColor = [0.5, 0.5, 0.5], style="single", annotation="buttons", width=cmds.getAttr('defaultResolution.width'))
 
-cmds.button(label = 'Save', command = 'saveAssets()')
-cmds.button(label = 'Export', command = 'exportAnim()')
+    cmds.button(label = 'Save', command = 'saveAssets()')
+    cmds.button(label = 'Export', command = 'exportAnim()')
 
-cmds.showWindow('savePublishTool')
+    cmds.showWindow('savePublishTool')
 
-savePublishTool()
+def setupTool():
+    createUI()
+    savePublishTool()
