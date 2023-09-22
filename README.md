@@ -20,6 +20,12 @@ ready to publish.
 - Filmbox (.fbx)
 - Alembic (.abc)
 
+### Output objects
+- setPiece - model
+- sets - model
+- layout - camera
+- animation - character/prop animation cache
+
 ### File directory
 ![FileDirectory](https://github.com/Wenorter/VFX-Tool-Collection/assets/44455243/2dab2adb-1ff5-4c3d-8e9a-e54d7893b9e9)
 
