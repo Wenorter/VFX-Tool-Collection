@@ -1,6 +1,6 @@
 # VFX-Tool-Collection
 A collection of VFX Pipeline Tools for Autodesk Maya that helps with asset publishing,  integrity checks and scene lighting
-
+---
 ### Asset Save/Publish Tool
 - This tool provides a way for artists to save and publish their work in a way that
 automates the naming of the file and where the file/s are stored.
