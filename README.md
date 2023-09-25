@@ -12,7 +12,7 @@ ready to publish.
 ### Scene Lighting Tool
 - This tool provides a way for lighting artists to load the latest version of the assets
 (from the publish folders) required to start their work on a shot.
-
+---
 ### Input data types
 - Autodesk Maya scene
 
@@ -25,7 +25,7 @@ ready to publish.
 - sets - model
 - layout - camera
 - animation - character/prop animation cache
-
+---
 ### File directory
 ![FileDirectory](https://github.com/Wenorter/VFX-Tool-Collection/assets/44455243/cb468112-f585-451e-83c4-d0b568ae5058)
 
