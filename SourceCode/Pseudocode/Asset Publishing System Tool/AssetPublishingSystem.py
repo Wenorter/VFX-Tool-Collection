@@ -9,6 +9,7 @@ from functools import partial
 
 scroll_list = None
 naming_convention = r"^[A-Z]{1,3}_([A-Z]{1}[a-z]+)+$"
+file_formats = ["Alembic", "FBX", "Publish Both"]
 export_type = ""
 
 #=======================================          
@@ -33,6 +34,8 @@ def saveFiles():
                     print(export_dir + " already exists")
                 file_name = "{0}_layout_v{1}.abc".format(asset_name, str(GetNextVersionNumber(asset_name, asset_type)).zfill(3))
                 export_file = export_dir + "/" + file_name
+                print("Exporting FBX Done.")
+                addLog("Exporting FBX Done.")
                 #SAVE .mb FILES HERE
 
 def publishFiles(export_type):
@@ -46,8 +49,8 @@ def publishFiles(export_type):
 
             #Alembic Export
             if (export_type == "alembic"):
-                print("Exporting Alembic...")
-                addLog("Exporting Alembic...")
+                print("Publishing Alembic...")
+                addLog("Publishing Alembic...")
                 for asset in asset_roots:
                     asset_name = asset.split("|")[-1]
                     export_dir = "{0}/{1}/{2}".format(publish_path, asset_type, asset_name)
@@ -72,11 +75,13 @@ def publishFiles(export_type):
                     print(alembic_args)
                     addLog(alembic_args)
                     cmds.AbcExport(j = " ".join(alembic_args))
+                    print("Publishing Alembic Assets Done.")
+                    addLog("Publishing Alembic Assets Done.")
 
             #FBX Export
             if (export_type == "fbx"):
-                print("Exporting FBX...")
-                addLog("Exporting FBX...")
+                print("Publishing FBX...")
+                addLog("Publishing FBX...")
                 for asset in asset_roots:
                     asset_name = asset.split("|")[-1]
                     export_dir = "{0}/{1}/{2}".format(publish_path, asset_type, asset_name)
@@ -88,6 +93,8 @@ def publishFiles(export_type):
                     file_name = "{0}_layout_v{1}.abc".format(asset_name, str(GetNextVersionNumber(publish_path, asset_name, asset_type)).zfill(3))
                     export_file = export_dir + "/" + file_name           
                     cmds.file(export_file, force=True, options="v=0;", typ="FBX export", pr=True,  ea=True)
+                    print("Publishing FBX Assets Done.")
+                    addLog("Publishing FBX Assets Done.")
 
 
 def GetLatestVersionNumber(path, asset_name, asset_type):
@@ -112,10 +119,7 @@ toolName = 'savePublishTool'
 ROOT_DIR = 'Directory Not Selected'
 #----------------UI Defs----------------
 
-
-def create_section(section_title, parent):
-    return cmds.frameLayout(label=section_title, collapsable=True, collapse=True, parent=parent, marginWidth=10, marginHeight=10)
-
+#Function to open file dialog when setting root directory
 def open_file_dialog():
     ROOT_DIR = cmds.fileDialog2(fileMode=3, caption="Select Root Directory", okCaption="Set Directory")
     if ROOT_DIR:
@@ -128,6 +132,20 @@ def open_file_dialog():
         cmds.error("Root directory not selected.")
         raise Exception("Root directory not selected.")
         
+#Function to create section of UI layout
+def create_section(section_title, parent):
+    return cmds.frameLayout(label=section_title, collapsable=True, collapse=True, parent=parent, marginWidth=10, marginHeight=10)
+    
+#Setting desired file format of publish assets        
+def setFileFormat(file_format_menu, *args):
+    # Get the selected value from the optionMenu
+    file_format = cmds.optionMenu(file_format_menu, query=True, value=True)
+    # Check if the selected value is not "Choose Focal Length"
+    if file_format != "Choose File Format":
+        file_format = str(file_format)              
+        message = f"File Format is set to {file_format}"
+        addLog(message)
+                
 def clearTextScrollList(scroll_list):
     cmds.textScrollList(scroll_list, edit=True, removeAll=True)
     
@@ -252,6 +270,14 @@ def createUI():
     cmds.text(label="Refresh Asset List: ")
     cmds.button(label="Refresh List", command='placeholder()', width = 100)
     cmds.setParent('..')  # End the rowLayout
+    
+    cmds.rowLayout(numberOfColumns = 2, columnWidth2 = (column1_width, column2_width)) 
+    cmds.text(label="Select File Format: ")
+    fileFormatMenu = cmds.optionMenu()
+    cmds.menuItem(label="Choose File Format", annotation="Set file format of publish assets")
+    [cmds.menuItem(label=str(file_format)) for file_format in file_formats]
+    cmds.optionMenu(fileFormatMenu, edit=True, changeCommand=lambda x: setFileFormat(fileFormatMenu))
+    cmds.setParent('..')  # End the rowLayout
 
     cmds.rowLayout(numberOfColumns=3, columnWidth3=(column1_width, column2_width, column3_width))
     cmds.text(label="Publish Displayed Assets:")
@@ -290,3 +316,6 @@ def reloadSavePublishTool():
     createUI()
 #------------Show UI Window------------------
 createUI()
+
+
+
