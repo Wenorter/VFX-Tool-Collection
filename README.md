@@ -27,7 +27,7 @@ ready to publish.
 - setPiece 
 - sets
 - prop
-- character\n
+- character
 #### Sequence
 - animation_cache
 - layout - camera
