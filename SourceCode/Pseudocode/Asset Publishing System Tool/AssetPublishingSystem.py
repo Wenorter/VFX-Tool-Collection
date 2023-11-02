@@ -12,7 +12,7 @@ naming_convention = r"^[A-Z]{1,3}_([A-Z]{1}[a-z]+)+$"
 export_type = ""
 
 #=======================================          
-#----------------DEFS-------------------
+#----------------DEFS-------------------f
 #=======================================
 
 def saveFiles():
@@ -47,6 +47,7 @@ def publishFiles(export_type):
             #Alembic Export
             if (export_type == "alembic"):
                 print("Exporting Alembic...")
+                addLog("Exporting Alembic...")
                 for asset in asset_roots:
                     asset_name = asset.split("|")[-1]
                     export_dir = "{0}/{1}/{2}".format(publish_path, asset_type, asset_name)
@@ -54,6 +55,7 @@ def publishFiles(export_type):
                         os.makedirs(export_dir)
                     except OSError:
                         print(export_dir + " already exists")
+                        addLog(export_dir + " already exists")
                     file_name = "{0}_layout_v{1}.abc".format(asset_name, str(GetNextVersionNumber(publish_path, asset_name, asset_type)).zfill(3))
                     export_file = export_dir + "/" + file_name
                     alembic_args = [
@@ -68,11 +70,13 @@ def publishFiles(export_type):
                         '-fr %d %d' % (cmds.playbackOptions(q=True, min=True), cmds.playbackOptions(q=True, max=True))
                     ]
                     print(alembic_args)
+                    addLog(alembic_args)
                     cmds.AbcExport(j = " ".join(alembic_args))
 
             #FBX Export
             if (export_type == "fbx"):
                 print("Exporting FBX...")
+                addLog("Exporting FBX...")
                 for asset in asset_roots:
                     asset_name = asset.split("|")[-1]
                     export_dir = "{0}/{1}/{2}".format(publish_path, asset_type, asset_name)
@@ -80,6 +84,7 @@ def publishFiles(export_type):
                         os.makedirs(export_dir)
                     except OSError:
                         print(export_dir + " already exists")
+                        addLog(export_dir + " already exists")
                     file_name = "{0}_layout_v{1}.abc".format(asset_name, str(GetNextVersionNumber(publish_path, asset_name, asset_type)).zfill(3))
                     export_file = export_dir + "/" + file_name           
                     cmds.file(export_file, force=True, options="v=0;", typ="FBX export", pr=True,  ea=True)
@@ -104,7 +109,28 @@ def GetNextVersionNumber(path, asset_name, asset_type):
 #------------------UI-------------------
 #=======================================
 toolName = 'savePublishTool'
+ROOT_DIR = 'Directory Not Selected'
 #----------------UI Defs----------------
+
+
+def create_section(section_title, parent):
+    return cmds.frameLayout(label=section_title, collapsable=True, collapse=True, parent=parent, marginWidth=10, marginHeight=10)
+
+def open_file_dialog():
+    ROOT_DIR = cmds.fileDialog2(fileMode=3, caption="Select Root Directory", okCaption="Set Directory")
+    if ROOT_DIR:
+        ROOT_DIR = ROOT_DIR[0]
+        print("Setting Directory: " + ROOT_DIR) #returning string of directory
+        addLog("Setting Directory: " + ROOT_DIR)
+        return ROOT_DIR
+        
+    else:
+        cmds.error("Root directory not selected.")
+        raise Exception("Root directory not selected.")
+        
+def clearTextScrollList(scroll_list):
+    cmds.textScrollList(scroll_list, edit=True, removeAll=True)
+    
 def reset_text_fields_background_color():
     global text_fields
     print(text_fields)
@@ -113,10 +139,15 @@ def reset_text_fields_background_color():
             text_field, 
             edit=True, 
             backgroundColor=(0.2667, 0.2667, 0.2667)
-            )
+            )        
+def addLog(message):
+    cmds.textScrollList(log_scroll_list, edit=True, append=[message])
+    # Scroll to the last item in the list to show the bottom
+    num_items = cmds.textScrollList(log_scroll_list, query=True, numberOfItems=True)
+    if num_items > 0:
+        last_item_index = num_items  # Index of the last item
+        cmds.textScrollList(log_scroll_list, edit=True, showIndexedItem=last_item_index)
 
-def create_section(section_title, parent):
-    return cmds.frameLayout(label=section_title, collapsable=True, collapse=True, parent=parent, marginWidth=10, marginHeight=10)
 #--------------UI Init------------------
 def createUI():
     if cmds.window(toolName, exists = True):
@@ -142,22 +173,42 @@ def createUI():
     ic_layout = cmds.columnLayout(adjustableColumn = True) 
 #------------Init Tool Header--------------------
  
-    cmds.separator(h=15, style="single", annotation="buttons", width = window_width)
-    cmds.text(label='Asset Save/Publish Tool for Autodesk Maya', backgroundColor = color_grey, font="boldLabelFont", align='center', width = window_width)
-    cmds.text(label='Saves, Publishes and automates file naming of assets', backgroundColor = color_grey, font="smallBoldLabelFont",  align='center', width = window_width)
-    cmds.separator(h=15, style="single", annotation="buttons", width = window_width)
+    cmds.separator(
+        h=15, 
+        style="single", 
+        width = window_width)
     
+    cmds.text(
+        label = 'Asset Save/Publish Tool for Autodesk Maya', 
+        backgroundColor = color_grey, 
+        font = "boldLabelFont", 
+        align = 'center', 
+        width = window_width)
+    
+    cmds.text(
+        label='Saves, Publishes and automates file naming of assets', 
+        backgroundColor = color_grey, 
+        font = "smallBoldLabelFont",  
+        align = 'center', 
+        width = window_width)
+    
+    cmds.separator(
+        h=15, 
+        style="single", 
+        width = window_width)
+           
 #------------Init Directory Management-----------
+
     create_section("Set Base Directory", ic_window)
     
     cmds.rowLayout(numberOfColumns = 2, columnWidth2 = (column1_width, column2_width)) 
     cmds.text(label="Current Directory:")
-    cmds.text(label="'" + "NULL" + "'")
+    cmds.textField(text="'" + ROOT_DIR + "'", placeholderText="Please, Select Directory", width = 250, enterCommand="changeCommand")
     cmds.setParent('..')  # End the rowLayout
     
     cmds.rowLayout(numberOfColumns=3, columnWidth3=(column1_width, column2_width, column3_width))
     cmds.text(label="Set Base Directory: ")
-    cmds.button(label="Configure", command='placeholder()', width = 100)
+    cmds.button(label="Configure", command='open_file_dialog()', width = 100)
     cmds.setParent('..')  # End the rowLayout
    
 #------------Init Save Assets----------------
@@ -211,13 +262,13 @@ def createUI():
   
     create_section("Log Messages", ic_window)
     cmds.rowLayout(numberOfColumns = 2, columnWidth2 = (column1_width, column2_width))
-    title_label = cmds.text(label="Log Messages")
-    cmds.button(label="Clean Log Messages", command='reset_text_fields_background_color()')
+    cmds.button(label="Clean Log Messages", command=lambda x: clearTextScrollList(log_scroll_list))
     cmds.setParent('..')  # End the rowLayout
     
     cmds.rowLayout(numberOfColumns = 1, columnWidth1 = column1_width)
-    global scroll_list
-    scroll_list = cmds.textScrollList(
+    
+    global log_scroll_list
+    log_scroll_list = cmds.textScrollList(
         numberOfRows=10,  
         allowMultiSelection=True,  
         width=window_width,
@@ -225,7 +276,12 @@ def createUI():
         append=[]
     )    
     cmds.setParent('..')  # End the rowLayout
-    cmds.showWindow(ic_window)
+    
+    cmds.separator(parent=ic_layout, h=15, style="single", annotation="buttons", width = window_width)       
+    cmds.button(parent=ic_layout, label="Reset UI", command="reloadSavePublishTool()")     
+    cmds.separator(parent=ic_layout, h=15, style="single", width = window_width)   
+    cmds.showWindow(ic_window) 
+
 #------------Window Reload------------------
 
 def reloadSavePublishTool():  
