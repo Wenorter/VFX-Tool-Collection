@@ -24,7 +24,7 @@ class MyWindow(QDialog):
         parent = parent or getMayaWindow()
         super(MyWindow, self).__init__(parent)
         self.resize(600, 450)
-        self.setWindowTitle('Import Tool')
+        self.setWindowTitle('Lighting Tool')
 
         self.episode_combo_box = QComboBox()
         if os.path.exists(sequence_path):
