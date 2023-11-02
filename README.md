@@ -16,20 +16,24 @@ ready to publish.
 
 ---
 ### Input data types
-- Autodesk Maya scene
+- Asserts and Props  
 
 ### Output data types
 - Filmbox (.fbx)
 - Alembic (.abc)
 
 ### Output objects
-- setPiece - model
-- sets - model
+#### Assets
+- setPiece 
+- sets
+- prop
+- character
+#### Sequence
+- animation_cache
 - layout - camera
-- animation - character/prop animation cache
-  
 ---
 ### File directory
-![FileDirectory](https://github.com/Wenorter/VFX-Tool-Collection/assets/44455243/cb468112-f585-451e-83c4-d0b568ae5058)
+![FileDirectory](https://github.com/Wenorter/VFX-Tool-Collection/assets/44455243/1eb57608-44f9-45f6-8326-fd3cfff2f192)
 
-
+### Data Flow
+![image](https://github.com/Wenorter/VFX-Tool-Collection/assets/44455243/8e2a679a-50ad-473f-9ba5-3843ffccf50d)
