@@ -33,8 +33,7 @@ ready to publish.
 - layout - camera
 ---
 ### File directory
-
-![FileDirectory](https://github.com/Wenorter/VFX-Tool-Collection/assets/44455243/0524736f-e882-42d6-bfdb-258eedc2357c)
+![FileDirectory](https://github.com/Wenorter/VFX-Tool-Collection/assets/44455243/1eb57608-44f9-45f6-8326-fd3cfff2f192)
 
 ### Data Flow
 ![image](https://github.com/Wenorter/VFX-Tool-Collection/assets/44455243/8e2a679a-50ad-473f-9ba5-3843ffccf50d)
