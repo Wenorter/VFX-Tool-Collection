@@ -23,12 +23,12 @@ ready to publish.
 - Alembic (.abc)
 
 ### Output objects
-**Assets**
+#### Assets
 - setPiece 
 - sets
 - prop
-- character
-**Sequence**
+- character\n
+#### Sequence
 - animation_cache
 - layout - camera
 ---
