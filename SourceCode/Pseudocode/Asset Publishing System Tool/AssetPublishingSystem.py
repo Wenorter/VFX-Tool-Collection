@@ -136,7 +136,7 @@ def open_file_dialog():
 def create_section(section_title, parent):
     return cmds.frameLayout(label=section_title, collapsable=True, collapse=True, parent=parent, marginWidth=10, marginHeight=10)
     
-#Setting desired file format of publish assets        
+#Function to set the desired file format of publish assets        
 def setFileFormat(file_format_menu, *args):
     # Get the selected value from the optionMenu
     file_format = cmds.optionMenu(file_format_menu, query=True, value=True)
@@ -146,18 +146,11 @@ def setFileFormat(file_format_menu, *args):
         message = f"File Format is set to {file_format}"
         addLog(message)
                 
+#Function for cleaning log scroll list
 def clearTextScrollList(scroll_list):
     cmds.textScrollList(scroll_list, edit=True, removeAll=True)
     
-def reset_text_fields_background_color():
-    global text_fields
-    print(text_fields)
-    for text_field in text_fields:
-        cmds.text(
-            text_field, 
-            edit=True, 
-            backgroundColor=(0.2667, 0.2667, 0.2667)
-            )        
+#Function for adding messages to the log scroll list   
 def addLog(message):
     cmds.textScrollList(log_scroll_list, edit=True, append=[message])
     # Scroll to the last item in the list to show the bottom
@@ -316,6 +309,7 @@ def reloadSavePublishTool():
     createUI()
 #------------Show UI Window------------------
 createUI()
+
 
 
 
