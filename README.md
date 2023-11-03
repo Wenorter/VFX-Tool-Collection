@@ -16,9 +16,10 @@ ready to publish.
 
 ---
 ### Input data types
-- Asserts and Props  
+- Maya viewport scene
 
 ### Output data types
+- Maya Binary (.mb)
 - Filmbox (.fbx)
 - Alembic (.abc)
 
@@ -28,12 +29,15 @@ ready to publish.
 - sets
 - prop
 - character
+
 #### Sequence
-- animation_cache
-- layout - camera
+- animation
+- layout
+- lighting
+
 ---
 ### File directory
-![FileDirectory](https://github.com/Wenorter/VFX-Tool-Collection/assets/44455243/1eb57608-44f9-45f6-8326-fd3cfff2f192)
+![FileDirectory](https://github.com/Wenorter/VFX-Tool-Collection/assets/44455243/fc4f5e74-bef8-4f52-b67c-faaa18f16c02)
 
 ### Data Flow
 ![image](https://github.com/Wenorter/VFX-Tool-Collection/assets/44455243/8e2a679a-50ad-473f-9ba5-3843ffccf50d)
