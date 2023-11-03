@@ -1,3 +1,4 @@
+
 # Script Name: Save/Publish Tool for Autodesk Maya
 # Description: This tool provides a way for artists to save and publish their work in a way that
 #automates the naming of the file and where the file/s are stored.
@@ -116,22 +117,8 @@ def GetNextVersionNumber(path, asset_name, asset_type):
 #------------------UI-------------------
 #=======================================
 toolName = 'savePublishTool'
-ROOT_DIR = 'Directory Not Selected'
 #----------------UI Defs----------------
-
-#Function to open file dialog when setting root directory
-def open_file_dialog():
-    ROOT_DIR = cmds.fileDialog2(fileMode=3, caption="Select Root Directory", okCaption="Set Directory")
-    if ROOT_DIR:
-        ROOT_DIR = ROOT_DIR[0]
-        print("Setting Directory: " + ROOT_DIR) #returning string of directory
-        addLog("Setting Directory: " + ROOT_DIR)
-        return ROOT_DIR
-        
-    else:
-        cmds.error("Root directory not selected.")
-        raise Exception("Root directory not selected.")
-        
+       
 #Function to create section of UI layout
 def create_section(section_title, parent):
     return cmds.frameLayout(label=section_title, collapsable=True, collapse=True, parent=parent, marginWidth=10, marginHeight=10)
@@ -145,20 +132,105 @@ def setFileFormat(file_format_menu, *args):
         file_format = str(file_format)              
         message = f"File Format is set to {file_format}"
         addLog(message)
-                
-#Function for cleaning log scroll list
-def clearTextScrollList(scroll_list):
-    cmds.textScrollList(scroll_list, edit=True, removeAll=True)
-    
+
 #Function for adding messages to the log scroll list   
 def addLog(message):
     cmds.textScrollList(log_scroll_list, edit=True, append=[message])
     # Scroll to the last item in the list to show the bottom
     num_items = cmds.textScrollList(log_scroll_list, query=True, numberOfItems=True)
     if num_items > 0:
-        last_item_index = num_items  # Index of the last item
+        last_item_index = num_items 
         cmds.textScrollList(log_scroll_list, edit=True, showIndexedItem=last_item_index)
 
+#Function for outputing files to the publish list 
+def addSaveItem(item):
+    cmds.textScrollList(save_scroll_list, edit=True, append=[item])
+    num_items = cmds.textScrollList(save_scroll_list, query=True, numberOfItems=True)
+    if num_items > 0:
+        last_item_index = num_items  
+        cmds.textScrollList(save_scroll_list, edit=True, showIndexedItem=last_item_index)
+              
+#Function for outputing files to the save list 
+def addSaveListItems(save_dir):
+    saveFileList = []
+    saveFileList.clear() #clear list
+    clearTextScrollList(save_scroll_list) #clear scroll list
+    
+    for file_path in os.listdir(save_dir):
+        # check if current file_path is a file
+        if os.path.isfile(os.path.join(save_dir, file_path)):
+            # add filename to list
+            saveFileList.append(file_path)
+                        
+    i = 0  
+    while i < len(saveFileList):
+        addSaveItem(saveFileList[i])
+        i = i + 1       
+    
+#Function for outputing files to the publish list 
+def addPublishItem(item):
+    cmds.textScrollList(publish_scroll_list, edit=True, append=[item])
+    num_items = cmds.textScrollList(save_scroll_list, query=True, numberOfItems=True)
+    if num_items > 0:
+        last_item_index = num_items  
+        cmds.textScrollList(publish_scroll_list, edit=True, showIndexedItem=last_item_index)
+        
+#Function for outputing files to the save list 
+def addPublishListItems(publish_dir):
+    publishFileList = []
+    publishFileList.clear() #clear list
+    clearTextScrollList(publish_scroll_list) #clear scroll list
+    
+    for file_path in os.listdir(publish_dir):
+        # check if current file_path is a file
+        if os.path.isfile(os.path.join(publish_dir, file_path)):
+            # add filename to list
+            publishFileList.append(file_path)
+                        
+    i = 0  
+    while i < len(publishFileList):
+        addPublishItem(publishFileList[i])
+        i = i + 1       
+        
+#Function for cleaning any scroll list
+def clearTextScrollList(scroll_list):
+    print("Update scroll list " + scroll_list)
+    cmds.textScrollList(scroll_list, edit=True, removeAll=True)
+    addLog("List refreshed!")
+
+#Function to update textfield
+def updateTextField(text_field, value):
+    print("Update text field: " + text_field + " " + str(value))
+    cmds.textField(text_field, edit=True, text=str(value))
+    
+#Function to open file dialog when setting root directory
+def open_file_dialog():
+    root_dir = cmds.fileDialog2(fileMode=3, caption="Select Root Directory", okCaption="Set Directory")
+    if root_dir:
+        root_dir = root_dir[0]
+        
+        print("Setting Directory: " + root_dir) #returning string of directory
+        addLog("Setting Directory: " + root_dir)
+        updateTextField(root_text_field, root_dir)
+        
+        global save_dir
+        save_dir = root_dir + "/asset_wips/saved/"
+        print("Setting save directory: " + save_dir)
+        addLog("Setting save directory: " + save_dir)  
+        updateTextField(save_text_field, save_dir)
+        addSaveListItems(save_dir)
+        
+        global publish_dir
+        publish_dir = root_dir + "/asset_final/published/"
+        print("Setting publish directory: " + publish_dir)
+        addLog("Setting publish directory: " + publish_dir)
+        updateTextField(publish_text_field, publish_dir)  
+        addPublishListItems(publish_dir)      
+        
+    else:
+        cmds.error("Root directory not selected.")
+        raise Exception("Root directory not selected.")
+            
 #--------------UI Init------------------
 def createUI():
     if cmds.window(toolName, exists = True):
@@ -210,23 +282,33 @@ def createUI():
            
 #------------Init Directory Management-----------
 
-    create_section("Set Base Directory", ic_window)
+    create_section("Set Root Directory", ic_window)
     
     cmds.rowLayout(numberOfColumns = 2, columnWidth2 = (column1_width, column2_width)) 
-    cmds.text(label="Current Directory:")
-    cmds.textField(text="'" + ROOT_DIR + "'", placeholderText="Please, Select Directory", width = 250, enterCommand="changeCommand")
+    cmds.text(label="Current Root Directory:")
+    
+    global root_text_field
+    root_text_field = cmds.textField(placeholderText="Please, Select Directory...", width = 250)
     cmds.setParent('..')  # End the rowLayout
     
     cmds.rowLayout(numberOfColumns=3, columnWidth3=(column1_width, column2_width, column3_width))
-    cmds.text(label="Set Base Directory: ")
+    cmds.text(label="Set Root Directory: ")
     cmds.button(label="Configure", command='open_file_dialog()', width = 100)
     cmds.setParent('..')  # End the rowLayout
    
 #------------Init Save Assets----------------
 
     create_section("Save Assets", ic_window)
-    cmds.rowLayout(numberOfColumns = 1, columnWidth1 = column1_width)
-    cmds.textScrollList(
+    cmds.rowLayout(numberOfColumns = 2, columnWidth2 = (column1_width, column2_width))
+    cmds.text(label="Current Save Directory: ")
+    
+    global save_text_field
+    save_text_field = cmds.textField(placeholderText="Please, Select Directory...", width = 250)   
+    cmds.setParent('..')  # End the rowLayout
+
+    cmds.rowLayout(numberOfColumns = 2, columnWidth2 = (column1_width, column2_width))
+    global save_scroll_list
+    save_scroll_list = cmds.textScrollList(
         isObscured = True,
         numberOfRows = 10,  
         allowMultiSelection = True, 
@@ -237,8 +319,8 @@ def createUI():
     cmds.setParent('..')
     
     cmds.rowLayout(numberOfColumns = 2, columnWidth2 = (column1_width, column2_width)) 
-    cmds.text(label="Refresh Asset List: ")
-    cmds.button(label="Refresh List", command='placeholder()', width = 100)
+    cmds.text(label="Refresh Asset List:")
+    cmds.button(label="Refresh List", command='addSaveListItems(save_dir)', width = 100)
     cmds.setParent('..')  # End the rowLayout
     
     cmds.rowLayout(numberOfColumns=3, columnWidth3=(column1_width, column2_width, column3_width))
@@ -249,8 +331,16 @@ def createUI():
 #--------Init Publish Assets----------------
 
     create_section("Publish Assets", ic_window)
+
+    cmds.rowLayout(numberOfColumns = 2, columnWidth2 = (column1_width, column2_width))
+    cmds.text(label="Current Publish Directory:")   
+    global publish_text_field
+    publish_text_field = cmds.textField(placeholderText="Please, Select Directory...", width = 250)   
+    cmds.setParent('..')  # End the rowLayout
+    
     cmds.rowLayout(numberOfColumns = 1, columnWidth1 = column1_width)
-    cmds.textScrollList(
+    global publish_scroll_list
+    publish_scroll_list = cmds.textScrollList(
         numberOfRows = 10,  
         allowMultiSelection = True, 
         width = window_width,
@@ -260,12 +350,12 @@ def createUI():
     cmds.setParent('..')
     
     cmds.rowLayout(numberOfColumns = 2, columnWidth2 = (column1_width, column2_width)) 
-    cmds.text(label="Refresh Asset List: ")
-    cmds.button(label="Refresh List", command='placeholder()', width = 100)
+    cmds.text(label="Refresh Asset List:")
+    cmds.button(label="Refresh List", command='addPublishListItems(publish_dir)', width = 100)
     cmds.setParent('..')  # End the rowLayout
     
     cmds.rowLayout(numberOfColumns = 2, columnWidth2 = (column1_width, column2_width)) 
-    cmds.text(label="Select File Format: ")
+    cmds.text(label="Select File Format:")
     fileFormatMenu = cmds.optionMenu()
     cmds.menuItem(label="Choose File Format", annotation="Set file format of publish assets")
     [cmds.menuItem(label=str(file_format)) for file_format in file_formats]
@@ -309,7 +399,3 @@ def reloadSavePublishTool():
     createUI()
 #------------Show UI Window------------------
 createUI()
-
-
-
-
