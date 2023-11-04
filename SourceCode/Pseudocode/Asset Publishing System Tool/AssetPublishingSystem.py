@@ -23,64 +23,97 @@ seq_types = ["animation", "layout", "light"]
     
 def saveFiles():
       
-    #Ok, so this one works 
-    save_path = "C:/Users/silve/Documents/VFX-Tool-Collection/asset_wips/saved"
-    cmds.file(save_path + "/lmao.mb", force=True, type="mayaBinary", preserveReferences=True, exportSelected=True)
-    print("Exporting Maya Binary Done.")
-    addLog("Exporting Maya Done.")
-    cmds.confirmDialog(title="Finished Saving", message="Exporting .MB File Done.\nFile saved at: " + save_path)
+    #Save path is getting assigned from a Current Save Directory Textfield
+    save_dir = getTextFieldValue(save_text_field)
+    print("CURRENT SAVE PATH: " + save_dir)
     
-    for asset_type in asset_types:
-        print("Exporting asset type: ", asset_type)
-        addLog("Exporting asset type: " + asset_type)
-        asset_group = "|" + asset_type
+    if save_dir != "":
         
-        #Crashes here doesn't go further
-        
-        if asset_group:
-            asset_roots = cmds.listRelatives(asset_group, children=True, fullPath=True)
-            for asset in asset_roots:
-                asset_name = asset.split("|")[-1].split(":")[-1]  # Get the object name without the namespace
-                export_dir = "{0}/{1}/{2}".format(save_path, asset_type, asset_name)
-                try:
-                    os.makedirs(export_dir)
-                except OSError:
-                    print(export_dir + " already exists")
-                file_name = "{0}_layout_v{1}.mb".format(asset_name, str(GetNextVersionNumber(asset_name, asset_type)).zfill(3))     
-                #Exporing .mb file into cache
-                #if cache folder doesn't exist create it
-                save_path = save_path + "cache/"
-                if not os.path.exists(save_path):
-                    os.makedirs(save_path)
+        save_dir = save_dir + "/assets" 
+                                 
+        for asset_type in asset_types:
+            print("Exporting asset type: ", asset_type)
+            addLog("Exporting asset type: " + asset_type)
+            asset_group = "|" + asset_type
+            
+            if cmds.objExists(asset_group):                
+                print("Selected object exist")
+                asset_roots = cmds.listRelatives(asset_group, children=True, fullPath=True)
                 
-                #print(save_path + file_name)
-                cmds.file(save_path + "/lmao.mb", force=True, type="OBJexport", preserveReferences=True, exportSelected=True)
-
-             
-        else:
-            print("Asset type doesn't exist: ", asset_type)  
+                for asset in asset_roots:
+                    asset_name = asset.split("|")[-1].split(":")[-1]  # Get the object name without the namespace
+                    export_dir = "{0}/{1}/{2}".format(save_dir, asset_type, asset_name)
+                    print("Asset Name: ", asset_name)
+                    file_name = "{0}_layout_v{1}.mb".format(asset_name, str(GetNextVersionNumber(asset_name, asset_type)).zfill(3))                   
+                    
+                    print("Export directory: ", export_dir)  
+                    #if folder doesn't exist create it                                                                                                 
+                    try:
+                        os.makedirs(export_dir)               
+                    except OSError:
+                        print(export_dir + " ALREADY EXISTS!")  
+                    
+                    #Maya Binary Saving
+                    export_file = export_dir + "/" + file_name       
+                    cmds.file(export_file, force=True, type="mayaBinary", preserveReferences=True, exportSelected=True)
+                    print("Exporting Maya Binary Done.")
+                    addLog("Exporting Maya Done.")
+                cmds.confirmDialog(title="Finished Saving Assets", message="Exporting .MB File Done.\nFile saved at: " + export_file)                       
+                                                                                                 
+            else:
+                print("Asset group doesn't exist.")               
+    else:
+        print("Directory textfield is empty! Please set root directory first.")
+        addLog("Directory textfield is empty! Please set root directory first.")        
 
 #Functions for publishing file assets as .FBX, .ABC or .MB
-def publishFiles(export_type):
-    publish_path = "/asset_final/published"
+def publishFiles():
+    
+    #Publish path is getting assigned from a Current Save Directory Textfield
+    publish_dir = getTextFieldValue(publish_text_field)
+    print("CURRENT PUBLISH PATH: " + publish_dir)
 
-    for asset_type in asset_types:
-        asset_group = "|" + asset_type
-        if cmds.objExists(asset_group):
-            asset_roots = cmds.listRelatives(asset_group, children=True, fullPath=True)         
-            print("Publishing Alembic...")
-            addLog("Publishing Alembic...")
-            for asset in asset_roots:
-                asset_name = asset.split("|")[-1]
-                export_dir = "{0}/{1}/{2}".format(publish_path, asset_type, asset_name)
-                try:
-                    os.makedirs(export_dir)
-                except OSError:
-                    print(export_dir + " already exists")
-                    addLog(export_dir + " already exists")
-                file_name = "{0}_layout_v{1}.abc".format(asset_name, str(GetNextVersionNumber(publish_path, asset_name, asset_type)).zfill(3))
-                export_file = export_dir + "/" + file_name
-                alembic_args = [
+    if publish_dir != "":
+        
+        publish_dir = publish_dir + "/assets" 
+                                 
+        for asset_type in asset_types:
+            print("Exporting asset type: ", asset_type)
+            addLog("Exporting asset type: " + asset_type)
+            asset_group = "|" + asset_type
+            
+            if cmds.objExists(asset_group):                
+                print("Selected object exist")
+                asset_roots = cmds.listRelatives(asset_group, children=True, fullPath=True)
+                
+                for asset in asset_roots:
+                    asset_name = asset.split("|")[-1].split(":")[-1]  # Get the object name without the namespace
+                    export_dir = "{0}/{1}/{2}".format(publish_dir, asset_type, asset_name)
+                    print("Asset Name: ", asset_name)
+                    file_name = "{0}_layout_v{1}.mb".format(asset_name, str(GetNextVersionNumber(asset_name, asset_type)).zfill(3))                   
+                    
+                    print("Export directory: ", export_dir) 
+                    
+                    #Maya Binary publishing 
+                    #if folder doesn't exist create it        
+                    try:
+                        os.makedirs(export_dir + "/cache")               
+                    except OSError:
+                        print(export_dir + "/cache" + " ALREADY EXISTS!")                  
+                                                       
+                    export_file = export_dir + "/cache/" + file_name                                                 
+                    cmds.file(export_file, force=True, type="mayaBinary", preserveReferences=True, exportSelected=True)
+                    #cmds.confirmDialog(title="Finished Publishing Assets", message="Exporting .MB File Done.\nFile saved at: " + export_file)    
+                     
+                    #Alembic Publishing 
+                    file_name = "{0}_layout_v{1}.abc".format(asset_name, str(GetNextVersionNumber(asset_name, asset_type)).zfill(3))   
+                    try:
+                        os.makedirs(export_dir + "/alembic")               
+                    except OSError:
+                        print(export_dir + "/alembic" + " ALREADY EXISTS!") 
+                    
+                    export_file = export_dir + "/alembic/" + file_name                                                                  
+                    alembic_args = [
                     '-renderableOnly',
                     '-file ' + export_file,
                     '-uvWrite',
@@ -90,38 +123,39 @@ def publishFiles(export_type):
                     '-dataFormat ogawa',
                     '-root ' + asset,
                     '-fr %d %d' % (cmds.playbackOptions(q=True, min=True), cmds.playbackOptions(q=True, max=True))
-                ]
-                print(alembic_args)
-                addLog(alembic_args)
-                cmds.AbcExport(j = " ".join(alembic_args))
-                print("Publishing Alembic Assets Done.")
-                addLog("Publishing Alembic Assets Done.")
-                cmds.confirmDialog(title="Exporting", message="Exporting Alembic Done")
+                    ]
+                    print(alembic_args)
+                    cmds.AbcExport(j = " ".join(alembic_args))
+                    #cmds.confirmDialog(title="Finished Publishing Assets", message="Exporting .ABC File Done.\nFile saved at: " + export_file)    
                     
-                    
-
-            #FBX Export
-            if (export_type == "fbx"):
-                print("Publishing FBX...")
-                addLog("Publishing FBX...")
-                for asset in asset_roots:
-                    asset_name = asset.split("|")[-1]
-                    export_dir = "{0}/{1}/{2}".format(publish_path, asset_type, asset_name)
+                    #FBX Publishing
+                    file_name = "{0}_layout_v{1}.fbx".format(asset_name, str(GetNextVersionNumber(asset_name, asset_type)).zfill(3))    
                     try:
-                        os.makedirs(export_dir)
+                        os.makedirs(export_dir + "/fbx")               
                     except OSError:
-                        print(export_dir + " already exists")
-                        addLog(export_dir + " already exists")
-                    file_name = "{0}_layout_v{1}.abc".format(asset_name, str(GetNextVersionNumber(publish_path, asset_name, asset_type)).zfill(3))
-                    export_file = export_dir + "/" + file_name           
-                    cmds.file(export_file, force=True, options="v=0;", typ="FBX export", pr=True,  ea=True)
-                    print("Publishing FBX Assets Done.")
-                    addLog("Publishing FBX Assets Done.")
-                    cmds.confirmDialog(title="Exporting", message="Exporting FBX Done")
+                        print(export_dir + "/fbx" + " ALREADY EXISTS!")
+                                     
+                    export_file = export_dir + "/fbx/" + file_name     
+                    cmds.file(export_file, force=True, options="v=0;", type="FBX export", pr=True,  ea=True)
+                    #cmds.confirmDialog(title="Finished Publishing Assets", message="Exporting .FBX File Done.\nFile saved at: " + export_file)                 
+                
+                cmds.confirmDialog(title="Finished Publishing Assets", message="Exporting .MB/.ABC/.FBX File Done.\nFile saved at: " + export_dir)                         
+                print("Exporting Maya Binary Done.")
+                addLog("Exporting Maya Done.")
+                print("Publishing Alembic Assets Done.")
+                addLog("Publishing Alembic Assets Done.")    
+                print("Publishing FBX Assets Done.")
+                addLog("Publishing FBX Assets Done.")                 
+                                                                                                                                                             
+            else:
+                print("Asset group doesn't exist.")               
+    else:
+        print("Directory textfield is empty! Please set root directory first.")
+        addLog("Directory textfield is empty! Please set root directory first.")            
+                
 
-
-def GetLatestVersionNumber(path, asset_name, asset_type):
-    dir = "{0}/{1}/{2}".format(path, asset_type, asset_name)
+def GetLatestVersionNumber(asset_name, asset_type):
+    dir = "{0}/{1}/{2}".format(save_dir, asset_type, asset_name)
     found = False
     count = 1
     while found == False:
@@ -132,8 +166,8 @@ def GetLatestVersionNumber(path, asset_name, asset_type):
             count = count + 1
     return count
 
-def GetNextVersionNumber(path, asset_name, asset_type):
-    return GetLatestVersionNumber(path, asset_name, asset_type) + 1
+def GetNextVersionNumber(asset_name, asset_type):
+    return GetLatestVersionNumber(asset_name, asset_type) + 1
 
 #=======================================          
 #------------------UI-------------------
@@ -144,36 +178,8 @@ toolName = 'savePublishTool'
 #Function to create section of UI layout
 def create_section(section_title, parent):
     return cmds.frameLayout(label=section_title, collapsable=True, collapse=True, parent=parent, marginWidth=10, marginHeight=10)
-    
-#Function to set the desired scene type of save assets        
-def setSaveSceneType(scene_type_menu):
-    # Get the selected value from the optionMenu
-    scene_type = cmds.optionMenu(scene_type_menu, query=True, value=True)
-    # Check if the selected value is not "Select Scene Type"
-    if scene_type != "Select Scene Type":
-        scene_type = str(scene_type)
-        print("Test Save Scene")
-        if scene_type == "Asset":
-            #resetting the option menu to clear items  
-            cmds.optionMenu(saveAssetSeqTypeMenu, edit=True, deleteAllItems=True)
-            cmds.menuItem(label="Select Asset/Seq Type")  
-            [cmds.menuItem(label=str(asset_type)) for asset_type in asset_types]
-            print("Update option menu: " + publishAssetSeqTypeMenu)              
-            cmds.optionMenu(saveAssetSeqTypeMenu, edit=True, changeCommand=lambda x: setAssetType(saveAssetSeqTypeMenu))  
-            
-        if scene_type == "Sequence":
-           #resetting the option menu to clear items
            
-            cmds.optionMenu(saveAssetSeqTypeMenu, edit=True, deleteAllItems=True)
-            cmds.menuItem(label="Select Asset/Seq Type")  
-            [cmds.menuItem(label=str(seq_type)) for seq_type in seq_types]
-            print("Update option menu: " + saveAssetSeqTypeMenu)              
-            cmds.optionMenu(saveAssetSeqTypeMenu, edit=True, changeCommand=lambda x: setAssetType(saveAssetSeqTypeMenu)) 
-            
-        message = f"Scene Type is set to {scene_type}"
-        addLog(message)
-        
-#Function to set the desired scene type of save assets        
+#Function to set the desired scene type of assets        
 def setSceneType(scene_type_menu, asset_type_menu):
     # Get the selected value from the optionMenu
     scene_type = cmds.optionMenu(scene_type_menu, query=True, value=True)
@@ -237,8 +243,7 @@ def addSaveListItems(save_dir):
         # check if current file_path is a file
         if os.path.isfile(os.path.join(save_dir, file_path)):
             # add filename to list
-            saveFileList.append(file_path)
-                        
+            saveFileList.append(file_path)                       
     i = 0  
     while i < len(saveFileList):
         addSaveItem(saveFileList[i])
@@ -268,10 +273,11 @@ def addPublishListItems(publish_dir):
     while i < len(publishFileList):
         addPublishItem(publishFileList[i])
         i = i + 1       
-
-def getSaveTextFieldValue():
-    value = cmds.textField(save_text_field, edit=True, q=True)
-    print("Current value: " + value)
+        
+#Function for getting value out of text field
+def getTextFieldValue(text_field):
+    value = cmds.textField(text_field, query=True, text=True)
+    return value
            
 #Function to update textfield
 def updateTextField(text_field, value):
@@ -299,14 +305,14 @@ def open_file_dialog():
         updateTextField(root_text_field, root_dir)
         
         global save_dir
-        save_dir = root_dir + "/asset_wips/saved/"
+        save_dir = root_dir + "/asset_wips/saved"
         print("Setting save directory: " + save_dir)
         addLog("Setting save directory: " + save_dir)  
         updateTextField(save_text_field, save_dir)
         addSaveListItems(save_dir)
         
         global publish_dir
-        publish_dir = root_dir + "/asset_final/published/"
+        publish_dir = root_dir + "/asset_final/published"
         print("Setting publish directory: " + publish_dir)
         addLog("Setting publish directory: " + publish_dir)
         updateTextField(publish_text_field, publish_dir)  
@@ -468,7 +474,7 @@ def createUI():
     #Publish Displayed Assets
     cmds.rowLayout(numberOfColumns=3, columnWidth3=(column1_width, column2_width, column3_width))
     cmds.text(label="Publish Displayed Assets:")
-    cmds.button(label="Publish Assets", command='placeholder()', width=100)
+    cmds.button(label="Publish Assets", command='publishFiles()', width=100)
     cmds.setParent('..')  # End the rowLayout
 
 #--------------Init Logs-------------------- 
