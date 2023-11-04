@@ -33,7 +33,7 @@ def saveFiles():
                                  
         for asset_type in asset_types:
             print("Exporting asset type: ", asset_type)
-            addLog("Exporting asset type: " + asset_type)
+            addLog("Exporting asset type: " + f)
             asset_group = "|" + asset_type
             
             if cmds.objExists(asset_group):                
@@ -61,7 +61,8 @@ def saveFiles():
                 cmds.confirmDialog(title="Finished Saving Assets", message="Exporting .MB File Done.\nFile saved at: " + export_file)                       
                                                                                                  
             else:
-                print("Asset group doesn't exist.")               
+                print("Asset group doesn't exist.")
+                addLog("Asset group doesn't exist. " + asset_group)                
     else:
         print("Directory textfield is empty! Please set root directory first.")
         addLog("Directory textfield is empty! Please set root directory first.")        
@@ -148,7 +149,8 @@ def publishFiles():
                 addLog("Publishing FBX Assets Done.")                 
                                                                                                                                                              
             else:
-                print("Asset group doesn't exist.")               
+                print("Asset group doesn't exist.")
+                addLog("Asset group doesn't exist. " + asset_group)               
     else:
         print("Directory textfield is empty! Please set root directory first.")
         addLog("Directory textfield is empty! Please set root directory first.")            
@@ -180,18 +182,24 @@ def create_section(section_title, parent):
     return cmds.frameLayout(label=section_title, collapsable=True, collapse=True, parent=parent, marginWidth=10, marginHeight=10)
            
 #Function to set the desired scene type of assets        
-def setSceneType(scene_type_menu, asset_type_menu):
+def setSceneType(scene_type_menu, asset_type_menu, text_field, var_dir):
     # Get the selected value from the optionMenu
     scene_type = cmds.optionMenu(scene_type_menu, query=True, value=True)
     # Check if the selected value is not "Select Scene Type"
     if scene_type != "Select Scene Type":
         scene_type = str(scene_type)
         print("Test Publish Scene")
-        if scene_type == "Asset":
+        if scene_type == "Asset": 
+            updateTextField(text_field, var_dir + "/assets")
+            #addSaveListItems(save_dir + "/sequence")  
+            addPublishListItems(var_dir + "/assets")                    
             #resetting the option menu to clear items 
             updateOptionMenu(asset_type_menu, asset_types) 
             
         if scene_type == "Sequence":
+           updateTextField(text_field, var_dir + "/sequence")
+           #ddSaveListItems(save_dir + "/sequence")  
+           addPublishListItems(var_dir + "/sequence")             
            #resetting the option menu to clear items
            updateOptionMenu(asset_type_menu, seq_types)
             
@@ -283,12 +291,7 @@ def getTextFieldValue(text_field):
 def updateTextField(text_field, value):
     print("Clear text field: " + text_field + " " + str(value))
     cmds.textField(text_field, edit=True, text=str(value))
-    
-#Function to update textfield
-def updateTextField(text_field, value):
-    print("Clear text field: " + text_field + " " + str(value))
-    cmds.textField(text_field, edit=True, text=str(value))
-             
+              
 #Function for cleaning any scroll list
 def clearTextScrollList(scroll_list):
     print("Clear scroll list " + scroll_list)
@@ -410,7 +413,7 @@ def createUI():
     saveSceneTypeMenu = cmds.optionMenu(width=140)
     cmds.menuItem(label="Select Scene Type")
     [cmds.menuItem(label=str(scene_type)) for scene_type in scene_types]
-    cmds.optionMenu(saveSceneTypeMenu, edit=True, changeCommand=lambda x: setSceneType(saveSceneTypeMenu, saveAssetSeqTypeMenu))
+    cmds.optionMenu(saveSceneTypeMenu, edit=True, changeCommand=lambda x: setSceneType(saveSceneTypeMenu, saveAssetSeqTypeMenu, save_text_field, save_dir))
     cmds.setParent('..')  # End the rowLayout
     
     #Save Asset and Sequence Type Menu
@@ -461,7 +464,7 @@ def createUI():
     publishSceneTypeMenu = cmds.optionMenu(width=140)
     cmds.menuItem(label="Select Scene Type")
     [cmds.menuItem(label=str(scene_type)) for scene_type in scene_types]
-    cmds.optionMenu(publishSceneTypeMenu, edit=True, changeCommand=lambda x: setSceneType(publishSceneTypeMenu, publishAssetSeqTypeMenu))
+    cmds.optionMenu(publishSceneTypeMenu, edit=True, changeCommand=lambda x: setSceneType(publishSceneTypeMenu, publishAssetSeqTypeMenu, publish_text_field, publish_dir))
     cmds.setParent('..')  # End the rowLayout
     
     #Publish Asset and Sequence Type Menu
