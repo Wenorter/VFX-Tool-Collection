@@ -1,4 +1,3 @@
-
 # Script Name: Save/Publish Tool for Autodesk Maya
 # Description: This tool provides a way for artists to save and publish their work in a way that
 #automates the naming of the file and where the file/s are stored.
@@ -10,40 +9,49 @@ from functools import partial
 
 scroll_list = None
 naming_convention = r"^[A-Z]{1,3}_([A-Z]{1}[a-z]+)+$"
-file_formats = ["Alembic", "FBX", "Publish Both"]
-export_type = ""
+
+scene_types = ["Asset", "Sequence"]
+asset_types = ["setPiece", "set", "prop", "character"]
+seq_types = ["animation", "layout", "light"]
 
 #=======================================          
 #----------------DEFS-------------------f
 #=======================================
 
+#Function for saving file assets as a .MB cache
 def saveFiles():
-    save_path = "/asset_wips/saved"
-    asset_types_to_save = ["setPiece", "set", "prop", "character"]
-    
-    for asset_type in asset_types_to_save:
+    save_path = "C:/Users/silve/Documents/VFX-Tool-Collection/asset_wips/saved/assets/"
+      
+    for asset_type in asset_types:
         asset_group = "|" + asset_type
         if cmds.objExists(asset_group):
             asset_roots = cmds.listRelatives(asset_group, children=True, fullPath=True)
 
             for asset in asset_roots:
                 asset_name = asset.split("|")[-1]
-                export_dir = "{0}/{1}/{2}".format(save_path,asset_type,asset_name)
+                export_dir = "{0}/{1}/{2}".format(save_path, asset_type, asset_name)
                 try:
                     os.makedirs(export_dir)
                 except OSError:
                     print(export_dir + " already exists")
-                file_name = "{0}_layout_v{1}.abc".format(asset_name, str(GetNextVersionNumber(asset_name, asset_type)).zfill(3))
-                export_file = export_dir + "/" + file_name
+                file_name = "{0}_layout_v{1}.mb".format(asset_name, str(GetNextVersionNumber(asset_name, asset_type)).zfill(3))
+                
+                #Exporing .mb file into cache
+                save_path = save_path + "cache/"
+                if not os.path.exists(save_path):
+                    os.makedirs(save_path)
+
+                cmds.file("save_path" + file_name, force=True, type="OBJexport", preserveReferences=True, exportSelected=True)
+
                 print("Exporting FBX Done.")
                 addLog("Exporting FBX Done.")
-                #SAVE .mb FILES HERE
+                cmds.confirmDialog(title="Exporting", message="Exporting FBX Done")
 
+#Functions for publishing file assets as .FBX, .ABC or .MB
 def publishFiles(export_type):
     publish_path = "/asset_final/published"
-    asset_types_to_publish = ["setPiece", "set", "layout", "animation"] 
 
-    for asset_type in asset_types_to_publish:
+    for asset_type in asset_types:
         asset_group = "|" + asset_type
         if cmds.objExists(asset_group):
             asset_roots = cmds.listRelatives(asset_group, children=True, fullPath=True)
@@ -78,6 +86,7 @@ def publishFiles(export_type):
                     cmds.AbcExport(j = " ".join(alembic_args))
                     print("Publishing Alembic Assets Done.")
                     addLog("Publishing Alembic Assets Done.")
+                    cmds.confirmDialog(title="Exporting", message="Exporting Alembic Done")
 
             #FBX Export
             if (export_type == "fbx"):
@@ -96,10 +105,11 @@ def publishFiles(export_type):
                     cmds.file(export_file, force=True, options="v=0;", typ="FBX export", pr=True,  ea=True)
                     print("Publishing FBX Assets Done.")
                     addLog("Publishing FBX Assets Done.")
+                    cmds.confirmDialog(title="Exporting", message="Exporting FBX Done")
 
 
 def GetLatestVersionNumber(path, asset_name, asset_type):
-    dir = "{0}/{1}/{2}".format(path, asset_type,asset_name)
+    dir = "{0}/{1}/{2}".format(path, asset_type, asset_name)
     found = False
     count = 1
     while found == False:
@@ -123,16 +133,72 @@ toolName = 'savePublishTool'
 def create_section(section_title, parent):
     return cmds.frameLayout(label=section_title, collapsable=True, collapse=True, parent=parent, marginWidth=10, marginHeight=10)
     
-#Function to set the desired file format of publish assets        
-def setFileFormat(file_format_menu, *args):
+#Function to set the desired scene type of save assets        
+def setSaveSceneType(scene_type_menu):
     # Get the selected value from the optionMenu
-    file_format = cmds.optionMenu(file_format_menu, query=True, value=True)
-    # Check if the selected value is not "Choose Focal Length"
-    if file_format != "Choose File Format":
-        file_format = str(file_format)              
-        message = f"File Format is set to {file_format}"
+    scene_type = cmds.optionMenu(scene_type_menu, query=True, value=True)
+    # Check if the selected value is not "Select Scene Type"
+    if scene_type != "Select Scene Type":
+        scene_type = str(scene_type)
+        print("Test Save Scene")
+        if scene_type == "Asset":
+            #resetting the option menu to clear items  
+            cmds.optionMenu(saveAssetSeqTypeMenu, edit=True, deleteAllItems=True)
+            cmds.menuItem(label="Select Asset/Seq Type")  
+            [cmds.menuItem(label=str(asset_type)) for asset_type in asset_types]
+            print("Update option menu: " + publishAssetSeqTypeMenu)              
+            cmds.optionMenu(saveAssetSeqTypeMenu, edit=True, changeCommand=lambda x: setAssetType(saveAssetSeqTypeMenu))  
+            
+        if scene_type == "Sequence":
+           #resetting the option menu to clear items
+           
+            cmds.optionMenu(saveAssetSeqTypeMenu, edit=True, deleteAllItems=True)
+            cmds.menuItem(label="Select Asset/Seq Type")  
+            [cmds.menuItem(label=str(seq_type)) for seq_type in seq_types]
+            print("Update option menu: " + saveAssetSeqTypeMenu)              
+            cmds.optionMenu(saveAssetSeqTypeMenu, edit=True, changeCommand=lambda x: setAssetType(saveAssetSeqTypeMenu)) 
+            
+        message = f"Scene Type is set to {scene_type}"
         addLog(message)
-
+        
+#Function to set the desired scene type of save assets        
+def setPublishSceneType(scene_type_menu):
+    # Get the selected value from the optionMenu
+    scene_type = cmds.optionMenu(scene_type_menu, query=True, value=True)
+    # Check if the selected value is not "Select Scene Type"
+    if scene_type != "Select Scene Type":
+        scene_type = str(scene_type)
+        print("Test Publish Scene")
+        if scene_type == "Asset":
+            #resetting the option menu to clear items  
+            cmds.optionMenu(publishAssetSeqTypeMenu, edit=True, deleteAllItems=True)
+            cmds.menuItem(label="Select Asset/Seq Type")  
+            [cmds.menuItem(label=str(asset_type)) for asset_type in asset_types]
+            print("Update option menu: " + publishAssetSeqTypeMenu)              
+            cmds.optionMenu(publishAssetSeqTypeMenu, edit=True, changeCommand=lambda x: setAssetType(publishAssetSeqTypeMenu))  
+            
+        if scene_type == "Sequence":
+           #resetting the option menu to clear items
+           
+            cmds.optionMenu(publishAssetSeqTypeMenu, edit=True, deleteAllItems=True)
+            cmds.menuItem(label="Select Asset/Seq Type")  
+            [cmds.menuItem(label=str(seq_type)) for seq_type in seq_types]
+            print("Update option menu: " + publishAssetSeqTypeMenu)              
+            cmds.optionMenu(publishAssetSeqTypeMenu, edit=True, changeCommand=lambda x: setAssetType(publishAssetSeqTypeMenu)) 
+            
+        message = f"Scene Type is set to {scene_type}"
+        addLog(message)
+        
+#Function to set the desired asset type of publish assets        
+def setAssetType(asset_type_menu, *args):
+    # Get the selected value from the optionMenu
+    asset_type = cmds.optionMenu(asset_type_menu, query=True, value=True)
+    # Check if the selected value is not "Choose Asset Type"
+    if asset_type != "Select Asset/Seq Type":
+        asset_type = str(asset_type)                         
+        message = f"Asset/Seq is set to {asset_type}"
+        addLog(message)
+    
 #Function for adding messages to the log scroll list   
 def addLog(message):
     cmds.textScrollList(log_scroll_list, edit=True, append=[message])
@@ -192,16 +258,20 @@ def addPublishListItems(publish_dir):
         addPublishItem(publishFileList[i])
         i = i + 1       
         
-#Function for cleaning any scroll list
-def clearTextScrollList(scroll_list):
-    print("Update scroll list " + scroll_list)
-    cmds.textScrollList(scroll_list, edit=True, removeAll=True)
-    addLog("List refreshed!")
-
 #Function to update textfield
 def updateTextField(text_field, value):
-    print("Update text field: " + text_field + " " + str(value))
+    print("Clear text field: " + text_field + " " + str(value))
     cmds.textField(text_field, edit=True, text=str(value))
+   
+#Function to update textfield
+def updateTextField(text_field, value):
+    print("Clear text field: " + text_field + " " + str(value))
+    cmds.textField(text_field, edit=True, text=str(value))
+             
+#Function for cleaning any scroll list
+def clearTextScrollList(scroll_list):
+    print("Clear scroll list " + scroll_list)
+    cmds.textScrollList(scroll_list, edit=True, removeAll=True)
     
 #Function to open file dialog when setting root directory
 def open_file_dialog():
@@ -246,51 +316,37 @@ def createUI():
     color_grey = [0.3, 0.3, 0.3]
 #-----------Window Create---------------
 
+    #Window
     ic_window = cmds.window(
         toolName, 
         title = "Save Publish Tool for Autodesk Maya", 
         width = window_width, 
         height = window_height
         )
-        
+    #Layout
     ic_layout = cmds.columnLayout(adjustableColumn = True) 
+    
 #------------Init Tool Header--------------------
  
-    cmds.separator(
-        h=15, 
-        style="single", 
-        width = window_width)
-    
-    cmds.text(
-        label = 'Asset Save/Publish Tool for Autodesk Maya', 
-        backgroundColor = color_grey, 
-        font = "boldLabelFont", 
-        align = 'center', 
-        width = window_width)
-    
-    cmds.text(
-        label='Saves, Publishes and automates file naming of assets', 
-        backgroundColor = color_grey, 
-        font = "smallBoldLabelFont",  
-        align = 'center', 
-        width = window_width)
-    
-    cmds.separator(
-        h=15, 
-        style="single", 
-        width = window_width)
+    cmds.separator(style="single", height=15, width = window_width) 
+    cmds.text(label = 'Asset Save/Publish Tool for Autodesk Maya', backgroundColor = color_grey, 
+        font = "boldLabelFont", align = 'center', width = window_width) 
+    cmds.text(label='Saves, Publishes and automates file naming of assets', backgroundColor = color_grey, 
+        font = "smallBoldLabelFont", align = 'center', width = window_width)
+    cmds.separator(style="single", height=15, width = window_width)
            
 #------------Init Directory Management-----------
 
     create_section("Set Root Directory", ic_window)
     
+    #Current root directory
     cmds.rowLayout(numberOfColumns = 2, columnWidth2 = (column1_width, column2_width)) 
     cmds.text(label="Current Root Directory:")
-    
     global root_text_field
     root_text_field = cmds.textField(placeholderText="Please, Select Directory...", width = 250)
     cmds.setParent('..')  # End the rowLayout
     
+    #Set Root directory
     cmds.rowLayout(numberOfColumns=3, columnWidth3=(column1_width, column2_width, column3_width))
     cmds.text(label="Set Root Directory: ")
     cmds.button(label="Configure", command='open_file_dialog()', width = 100)
@@ -299,96 +355,134 @@ def createUI():
 #------------Init Save Assets----------------
 
     create_section("Save Assets", ic_window)
-    cmds.rowLayout(numberOfColumns = 2, columnWidth2 = (column1_width, column2_width))
-    cmds.text(label="Current Save Directory: ")
     
+    #Current Save directory
+    cmds.rowLayout(numberOfColumns=2, columnWidth2 = (column1_width, column2_width))
+    cmds.text(label="Current Save Directory: ")  
     global save_text_field
-    save_text_field = cmds.textField(placeholderText="Please, Select Directory...", width = 250)   
+    save_text_field = cmds.textField(placeholderText="Please, Select Directory...", width=250)   
     cmds.setParent('..')  # End the rowLayout
 
-    cmds.rowLayout(numberOfColumns = 2, columnWidth2 = (column1_width, column2_width))
+    #Save Directory Scroll List
+    cmds.rowLayout(numberOfColumns=2, columnWidth2 = (column1_width, column2_width))
     global save_scroll_list
     save_scroll_list = cmds.textScrollList(
         isObscured = True,
         numberOfRows = 10,  
         allowMultiSelection = True, 
         width = window_width,
-        height = 300,
+        height = 200,
         append = []  
     )
     cmds.setParent('..')
     
-    cmds.rowLayout(numberOfColumns = 2, columnWidth2 = (column1_width, column2_width)) 
+    #Refresh Asset List
+    cmds.rowLayout(numberOfColumns=2, columnWidth2 = (column1_width, column2_width)) 
     cmds.text(label="Refresh Asset List:")
-    cmds.button(label="Refresh List", command='addSaveListItems(save_dir)', width = 100)
+    cmds.button(label="Refresh List", command='addSaveListItems(save_dir)', width=100)
+    cmds.setParent('..')  # End the rowLayout
+
+    #Save Scene Type Menu
+    cmds.rowLayout(numberOfColumns=2, columnWidth2 = (column1_width, column2_width)) 
+    cmds.text(label="Select Scene Type:")
+    global saveSceneTypeMenu
+    saveSceneTypeMenu = cmds.optionMenu(width=140)
+    cmds.menuItem(label="Select Scene Type")
+    [cmds.menuItem(label=str(scene_type)) for scene_type in scene_types]
+    cmds.optionMenu(saveSceneTypeMenu, edit=True, changeCommand=lambda x: setSaveSceneType(saveSceneTypeMenu))
     cmds.setParent('..')  # End the rowLayout
     
+    #Save Asset and Sequence Type Menu
+    cmds.rowLayout(numberOfColumns=2, columnWidth2 = (column1_width, column2_width)) 
+    cmds.text(label="Select Asset/Seq Type:")
+    global saveAssetSeqTypeMenu
+    saveAssetSeqTypeMenu = cmds.optionMenu(width=140)    
+    cmds.setParent('..')  # End the rowLayout
+    
+    #Save Diplayed Assets
     cmds.rowLayout(numberOfColumns=3, columnWidth3=(column1_width, column2_width, column3_width))
     cmds.text(label="Save displayed assets:")
-    cmds.button(label="Save Assets", command='placeholder()', width = 100)
+    cmds.button(label="Save Assets", command='placeholder()', width=100)
     cmds.setParent('..')  # End the rowLayout
 
 #--------Init Publish Assets----------------
 
     create_section("Publish Assets", ic_window)
 
-    cmds.rowLayout(numberOfColumns = 2, columnWidth2 = (column1_width, column2_width))
+    #Current publish directory
+    cmds.rowLayout(numberOfColumns=2, columnWidth2 = (column1_width, column2_width))
     cmds.text(label="Current Publish Directory:")   
     global publish_text_field
-    publish_text_field = cmds.textField(placeholderText="Please, Select Directory...", width = 250)   
+    publish_text_field = cmds.textField(placeholderText="Please, Select Directory...", width=250)   
     cmds.setParent('..')  # End the rowLayout
     
+    #Publish directory scroll list
     cmds.rowLayout(numberOfColumns = 1, columnWidth1 = column1_width)
     global publish_scroll_list
     publish_scroll_list = cmds.textScrollList(
         numberOfRows = 10,  
         allowMultiSelection = True, 
         width = window_width,
-        height = 300,
+        height = 200,
         append = []  
     )
     cmds.setParent('..')
     
-    cmds.rowLayout(numberOfColumns = 2, columnWidth2 = (column1_width, column2_width)) 
+    #Publish Refresh Asset List
+    cmds.rowLayout(numberOfColumns=2, columnWidth2 = (column1_width, column2_width)) 
     cmds.text(label="Refresh Asset List:")
-    cmds.button(label="Refresh List", command='addPublishListItems(publish_dir)', width = 100)
+    cmds.button(label="Refresh List", command='addPublishListItems(publish_dir)', width=100)
     cmds.setParent('..')  # End the rowLayout
     
-    cmds.rowLayout(numberOfColumns = 2, columnWidth2 = (column1_width, column2_width)) 
-    cmds.text(label="Select File Format:")
-    fileFormatMenu = cmds.optionMenu()
-    cmds.menuItem(label="Choose File Format", annotation="Set file format of publish assets")
-    [cmds.menuItem(label=str(file_format)) for file_format in file_formats]
-    cmds.optionMenu(fileFormatMenu, edit=True, changeCommand=lambda x: setFileFormat(fileFormatMenu))
+    #Publish Scene Type Menu
+    cmds.rowLayout(numberOfColumns=2, columnWidth2 = (column1_width, column2_width)) 
+    cmds.text(label="Select Scene Type:")
+    global publishSceneTypeMenu
+    publishSceneTypeMenu = cmds.optionMenu(width=140)
+    cmds.menuItem(label="Select Scene Type")
+    [cmds.menuItem(label=str(scene_type)) for scene_type in scene_types]
+    cmds.optionMenu(publishSceneTypeMenu, edit=True, changeCommand=lambda x: setPublishSceneType(publishSceneTypeMenu))
+    cmds.setParent('..')  # End the rowLayout
+    
+    #Publish Asset and Sequence Type Menu
+    cmds.rowLayout(numberOfColumns=2, columnWidth2 = (column1_width, column2_width)) 
+    cmds.text(label="Select Asset/Seq Type:")
+    global publishAssetSeqTypeMenu
+    publishAssetSeqTypeMenu = cmds.optionMenu(width=140)    
     cmds.setParent('..')  # End the rowLayout
 
+    #Publish Displayed Assets
     cmds.rowLayout(numberOfColumns=3, columnWidth3=(column1_width, column2_width, column3_width))
     cmds.text(label="Publish Displayed Assets:")
-    cmds.button(label="Publish Assets", command='placeholder()', width = 100)
+    cmds.button(label="Publish Assets", command='placeholder()', width=100)
     cmds.setParent('..')  # End the rowLayout
 
 #--------------Init Logs-------------------- 
   
     create_section("Log Messages", ic_window)
+    
+    #Clean log messages
     cmds.rowLayout(numberOfColumns = 2, columnWidth2 = (column1_width, column2_width))
+    cmds.text(label="Clean Log Messages:")
     cmds.button(label="Clean Log Messages", command=lambda x: clearTextScrollList(log_scroll_list))
     cmds.setParent('..')  # End the rowLayout
     
+    #Log scroll list
     cmds.rowLayout(numberOfColumns = 1, columnWidth1 = column1_width)
-    
     global log_scroll_list
     log_scroll_list = cmds.textScrollList(
         numberOfRows=10,  
         allowMultiSelection=True,  
         width=window_width,
-        height=300,
+        height=200,
         append=[]
     )    
     cmds.setParent('..')  # End the rowLayout
     
-    cmds.separator(parent=ic_layout, h=15, style="single", annotation="buttons", width = window_width)       
+    #Reset UI
+    cmds.separator(parent=ic_layout, style="single", annotation="buttons", height=15, width=window_width)       
     cmds.button(parent=ic_layout, label="Reset UI", command="reloadSavePublishTool()")     
-    cmds.separator(parent=ic_layout, h=15, style="single", width = window_width)   
+    cmds.separator(parent=ic_layout, style="single", height=15, width = window_width)   
     cmds.showWindow(ic_window) 
 
 #------------Window Reload------------------
