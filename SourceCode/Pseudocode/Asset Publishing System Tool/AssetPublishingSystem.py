@@ -19,33 +19,46 @@ seq_types = ["animation", "layout", "light"]
 #=======================================
 
 #Function for saving file assets as a .MB cache
+#Function to get value of a text field
+    
 def saveFiles():
-    save_path = "C:/Users/silve/Documents/VFX-Tool-Collection/asset_wips/saved/assets/"
       
+    #Ok, so this one works 
+    save_path = "C:/Users/silve/Documents/VFX-Tool-Collection/asset_wips/saved"
+    cmds.file(save_path + "/lmao.mb", force=True, type="mayaBinary", preserveReferences=True, exportSelected=True)
+    print("Exporting Maya Binary Done.")
+    addLog("Exporting Maya Done.")
+    cmds.confirmDialog(title="Finished Saving", message="Exporting .MB File Done.\nFile saved at: " + save_path)
+    
     for asset_type in asset_types:
+        print("Exporting asset type: ", asset_type)
+        addLog("Exporting asset type: " + asset_type)
         asset_group = "|" + asset_type
-        if cmds.objExists(asset_group):
+        
+        #Crashes here doesn't go further
+        
+        if asset_group:
             asset_roots = cmds.listRelatives(asset_group, children=True, fullPath=True)
-
             for asset in asset_roots:
-                asset_name = asset.split("|")[-1]
+                asset_name = asset.split("|")[-1].split(":")[-1]  # Get the object name without the namespace
                 export_dir = "{0}/{1}/{2}".format(save_path, asset_type, asset_name)
                 try:
                     os.makedirs(export_dir)
                 except OSError:
                     print(export_dir + " already exists")
-                file_name = "{0}_layout_v{1}.mb".format(asset_name, str(GetNextVersionNumber(asset_name, asset_type)).zfill(3))
-                
+                file_name = "{0}_layout_v{1}.mb".format(asset_name, str(GetNextVersionNumber(asset_name, asset_type)).zfill(3))     
                 #Exporing .mb file into cache
+                #if cache folder doesn't exist create it
                 save_path = save_path + "cache/"
                 if not os.path.exists(save_path):
                     os.makedirs(save_path)
+                
+                #print(save_path + file_name)
+                cmds.file(save_path + "/lmao.mb", force=True, type="OBJexport", preserveReferences=True, exportSelected=True)
 
-                cmds.file("save_path" + file_name, force=True, type="OBJexport", preserveReferences=True, exportSelected=True)
-
-                print("Exporting FBX Done.")
-                addLog("Exporting FBX Done.")
-                cmds.confirmDialog(title="Exporting", message="Exporting FBX Done")
+             
+        else:
+            print("Asset type doesn't exist: ", asset_type)  
 
 #Functions for publishing file assets as .FBX, .ABC or .MB
 def publishFiles(export_type):
@@ -54,39 +67,38 @@ def publishFiles(export_type):
     for asset_type in asset_types:
         asset_group = "|" + asset_type
         if cmds.objExists(asset_group):
-            asset_roots = cmds.listRelatives(asset_group, children=True, fullPath=True)
-
-            #Alembic Export
-            if (export_type == "alembic"):
-                print("Publishing Alembic...")
-                addLog("Publishing Alembic...")
-                for asset in asset_roots:
-                    asset_name = asset.split("|")[-1]
-                    export_dir = "{0}/{1}/{2}".format(publish_path, asset_type, asset_name)
-                    try:
-                        os.makedirs(export_dir)
-                    except OSError:
-                        print(export_dir + " already exists")
-                        addLog(export_dir + " already exists")
-                    file_name = "{0}_layout_v{1}.abc".format(asset_name, str(GetNextVersionNumber(publish_path, asset_name, asset_type)).zfill(3))
-                    export_file = export_dir + "/" + file_name
-                    alembic_args = [
-                        '-renderableOnly',
-                        '-file ' + export_file,
-                        '-uvWrite',
-                        '-writeFaceSets',
-                        '-worldSpace',
-                        '-writeVisibility',
-                        '-dataFormat ogawa',
-                        '-root ' + asset,
-                        '-fr %d %d' % (cmds.playbackOptions(q=True, min=True), cmds.playbackOptions(q=True, max=True))
-                    ]
-                    print(alembic_args)
-                    addLog(alembic_args)
-                    cmds.AbcExport(j = " ".join(alembic_args))
-                    print("Publishing Alembic Assets Done.")
-                    addLog("Publishing Alembic Assets Done.")
-                    cmds.confirmDialog(title="Exporting", message="Exporting Alembic Done")
+            asset_roots = cmds.listRelatives(asset_group, children=True, fullPath=True)         
+            print("Publishing Alembic...")
+            addLog("Publishing Alembic...")
+            for asset in asset_roots:
+                asset_name = asset.split("|")[-1]
+                export_dir = "{0}/{1}/{2}".format(publish_path, asset_type, asset_name)
+                try:
+                    os.makedirs(export_dir)
+                except OSError:
+                    print(export_dir + " already exists")
+                    addLog(export_dir + " already exists")
+                file_name = "{0}_layout_v{1}.abc".format(asset_name, str(GetNextVersionNumber(publish_path, asset_name, asset_type)).zfill(3))
+                export_file = export_dir + "/" + file_name
+                alembic_args = [
+                    '-renderableOnly',
+                    '-file ' + export_file,
+                    '-uvWrite',
+                    '-writeFaceSets',
+                    '-worldSpace',
+                    '-writeVisibility',
+                    '-dataFormat ogawa',
+                    '-root ' + asset,
+                    '-fr %d %d' % (cmds.playbackOptions(q=True, min=True), cmds.playbackOptions(q=True, max=True))
+                ]
+                print(alembic_args)
+                addLog(alembic_args)
+                cmds.AbcExport(j = " ".join(alembic_args))
+                print("Publishing Alembic Assets Done.")
+                addLog("Publishing Alembic Assets Done.")
+                cmds.confirmDialog(title="Exporting", message="Exporting Alembic Done")
+                    
+                    
 
             #FBX Export
             if (export_type == "fbx"):
@@ -162,7 +174,7 @@ def setSaveSceneType(scene_type_menu):
         addLog(message)
         
 #Function to set the desired scene type of save assets        
-def setPublishSceneType(scene_type_menu):
+def setSceneType(scene_type_menu, asset_type_menu):
     # Get the selected value from the optionMenu
     scene_type = cmds.optionMenu(scene_type_menu, query=True, value=True)
     # Check if the selected value is not "Select Scene Type"
@@ -170,27 +182,26 @@ def setPublishSceneType(scene_type_menu):
         scene_type = str(scene_type)
         print("Test Publish Scene")
         if scene_type == "Asset":
-            #resetting the option menu to clear items  
-            cmds.optionMenu(publishAssetSeqTypeMenu, edit=True, deleteAllItems=True)
-            cmds.menuItem(label="Select Asset/Seq Type")  
-            [cmds.menuItem(label=str(asset_type)) for asset_type in asset_types]
-            print("Update option menu: " + publishAssetSeqTypeMenu)              
-            cmds.optionMenu(publishAssetSeqTypeMenu, edit=True, changeCommand=lambda x: setAssetType(publishAssetSeqTypeMenu))  
+            #resetting the option menu to clear items 
+            updateOptionMenu(asset_type_menu, asset_types) 
             
         if scene_type == "Sequence":
            #resetting the option menu to clear items
-           
-            cmds.optionMenu(publishAssetSeqTypeMenu, edit=True, deleteAllItems=True)
-            cmds.menuItem(label="Select Asset/Seq Type")  
-            [cmds.menuItem(label=str(seq_type)) for seq_type in seq_types]
-            print("Update option menu: " + publishAssetSeqTypeMenu)              
-            cmds.optionMenu(publishAssetSeqTypeMenu, edit=True, changeCommand=lambda x: setAssetType(publishAssetSeqTypeMenu)) 
+           updateOptionMenu(asset_type_menu, seq_types)
             
         message = f"Scene Type is set to {scene_type}"
         addLog(message)
-        
+ 
+#Function to update opdion menu
+def updateOptionMenu(option_type_menu, var_types):
+    cmds.optionMenu(option_type_menu, edit=True, deleteAllItems=True)
+    cmds.menuItem(label="Select Asset/Seq Type")  
+    [cmds.menuItem(label=str(var_type)) for var_type in var_types]
+    print("Update option menu: " + option_type_menu)              
+    cmds.optionMenu(option_type_menu, edit=True, changeCommand=lambda x: setAssetType(option_type_menu))  
+             
 #Function to set the desired asset type of publish assets        
-def setAssetType(asset_type_menu, *args):
+def setAssetType(asset_type_menu):
     # Get the selected value from the optionMenu
     asset_type = cmds.optionMenu(asset_type_menu, query=True, value=True)
     # Check if the selected value is not "Choose Asset Type"
@@ -257,12 +268,16 @@ def addPublishListItems(publish_dir):
     while i < len(publishFileList):
         addPublishItem(publishFileList[i])
         i = i + 1       
-        
+
+def getSaveTextFieldValue():
+    value = cmds.textField(save_text_field, edit=True, q=True)
+    print("Current value: " + value)
+           
 #Function to update textfield
 def updateTextField(text_field, value):
     print("Clear text field: " + text_field + " " + str(value))
     cmds.textField(text_field, edit=True, text=str(value))
-   
+    
 #Function to update textfield
 def updateTextField(text_field, value):
     print("Clear text field: " + text_field + " " + str(value))
@@ -385,24 +400,23 @@ def createUI():
     #Save Scene Type Menu
     cmds.rowLayout(numberOfColumns=2, columnWidth2 = (column1_width, column2_width)) 
     cmds.text(label="Select Scene Type:")
-    global saveSceneTypeMenu
+    global saveSceneTypeMenu, saveAssetSeqTypeMenu
     saveSceneTypeMenu = cmds.optionMenu(width=140)
     cmds.menuItem(label="Select Scene Type")
     [cmds.menuItem(label=str(scene_type)) for scene_type in scene_types]
-    cmds.optionMenu(saveSceneTypeMenu, edit=True, changeCommand=lambda x: setSaveSceneType(saveSceneTypeMenu))
+    cmds.optionMenu(saveSceneTypeMenu, edit=True, changeCommand=lambda x: setSceneType(saveSceneTypeMenu, saveAssetSeqTypeMenu))
     cmds.setParent('..')  # End the rowLayout
     
     #Save Asset and Sequence Type Menu
     cmds.rowLayout(numberOfColumns=2, columnWidth2 = (column1_width, column2_width)) 
     cmds.text(label="Select Asset/Seq Type:")
-    global saveAssetSeqTypeMenu
     saveAssetSeqTypeMenu = cmds.optionMenu(width=140)    
     cmds.setParent('..')  # End the rowLayout
     
     #Save Diplayed Assets
     cmds.rowLayout(numberOfColumns=3, columnWidth3=(column1_width, column2_width, column3_width))
     cmds.text(label="Save displayed assets:")
-    cmds.button(label="Save Assets", command='placeholder()', width=100)
+    cmds.button(label="Save Assets", command='saveFiles()', width=100)
     cmds.setParent('..')  # End the rowLayout
 
 #--------Init Publish Assets----------------
@@ -441,7 +455,7 @@ def createUI():
     publishSceneTypeMenu = cmds.optionMenu(width=140)
     cmds.menuItem(label="Select Scene Type")
     [cmds.menuItem(label=str(scene_type)) for scene_type in scene_types]
-    cmds.optionMenu(publishSceneTypeMenu, edit=True, changeCommand=lambda x: setPublishSceneType(publishSceneTypeMenu))
+    cmds.optionMenu(publishSceneTypeMenu, edit=True, changeCommand=lambda x: setSceneType(publishSceneTypeMenu, publishAssetSeqTypeMenu))
     cmds.setParent('..')  # End the rowLayout
     
     #Publish Asset and Sequence Type Menu
