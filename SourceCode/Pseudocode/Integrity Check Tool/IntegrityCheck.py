@@ -5,18 +5,19 @@ import os
 #Global Vars
 scroll_list = None
 root_display = None
-root_folder = ""
+root_folder = r"C:\Users\Romeo.Delinicolas\Documents\maya\scripts\VFX-Tool-Collection\asset_final\published\assets"
 text_fields = []  
 standard_focal_lengths = (12, 14, 16, 18, 21, 25, 27, 32, 35, 40, 50, 65, 75, 100, 135, 150)
 standard_fstop_values = (1.3, 2, 2.8, 4, 5.6, 8, 11, 16, 22)
-naming_convention = r"^[A-Z]{1,3}_([A-Z]{1}[a-z]+)+$"
-export_asset_groups = ["props", "characters", "set", "setPiece"]
+naming_convention = r".*"
+export_asset_groups = ["setPiece", "set", "prop", "character"]
 import math
 
 #---------------------------GENERAL CHECKS------------------------------------------------------
 
 def check_naming_convention():
     error_nodes = []
+    passed = True
     # Get all transform nodes in the scene
     transform_nodes = cmds.ls(type="transform")
     for asset in transform_nodes:
@@ -67,13 +68,15 @@ def check_node_hierarchy():
     assets = cmds.ls(type="transform")  # Assuming you have selected asset objects.
     error_nodes = []
     for asset in assets:
-        if asset not in ["front","top","side","persp"]: #not default camera
+        if asset not in ["front","top","side","persp","setPiece","set","character","prop"]: #not default camera
             asset_parents = cmds.listRelatives(asset, parent=True, fullPath=True)
             if asset_parents:
-                secondary_parents = cmds.listRelatives(asset_parents, parent=True, fullPath=True)
-                if not secondary_parents:   #if group is top level
-                    asset_parent= asset_parents[0].replace('|', "")
-                    if (asset_parent not in export_asset_groups):
+                for asset_parent in asset_parents:
+                    asset_parent = asset_parent.replace('|', "").rstrip()
+
+                    if (str(asset_parent) not in export_asset_groups):
+                        print(asset_parent)
+                        print(export_asset_groups)
                         addLog(f"FAIL: Node Hierarhcy of {asset} does not match correct export groups. Supported: {export_asset_groups}")
                         error_nodes.append(asset)
                         passed = False
@@ -326,11 +329,12 @@ def create_ui():
     create_section("General", ic_window)
     cmds.button(label="Pick Root Folder", command='pick_root()')
     global root_display
+    global root_folder
     root_display = cmds.textScrollList(
     numberOfRows=1,  # Set the number of visible rows
     width=100,
     height=30,
-    append=[]
+    append=[root_folder]
     )
     cmds.text("Runs on all nodes in the scene")    
 
