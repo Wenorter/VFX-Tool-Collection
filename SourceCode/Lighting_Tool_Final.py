@@ -10,7 +10,8 @@ from PySide2.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, \
     QListWidget, QComboBox, QDialog, QAbstractItemView
 
 root_path = "Root to Repository "
-sequence_path = f'{root_path}\asset_final\published\sequence'
+sequence_path = f'{root_path}\asset_final\published\sequence' #To get the published assets from the published folder
+#sequence_path = 'D:/MACOSX/sequence/' #local published folder for testing
 
 
 def getMayaWindow():
