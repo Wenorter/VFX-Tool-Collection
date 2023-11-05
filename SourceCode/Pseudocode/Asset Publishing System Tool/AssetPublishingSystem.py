@@ -33,7 +33,7 @@ def saveFiles():
                                  
         for asset_type in asset_types:
             print("Exporting asset type: ", asset_type)
-            addLog("Exporting asset type: " + f)
+            addLog("Exporting asset type: " + asset_type)
             asset_group = "|" + asset_type
             
             if cmds.objExists(asset_group):                

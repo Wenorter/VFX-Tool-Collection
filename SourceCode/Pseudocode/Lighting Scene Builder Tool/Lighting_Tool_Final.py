@@ -9,7 +9,8 @@ import maya.OpenMayaUI as OpenMayaUI
 from PySide2.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, \
     QListWidget, QComboBox, QDialog, QAbstractItemView
 
-sequence_path = 'D:/MACOSX/sequence/'
+root_path = "Root to Repository "
+sequence_path = f'{root_path}\asset_final\published\sequence'
 
 
 def getMayaWindow():
