@@ -5,7 +5,8 @@ import os
 #Global Vars
 scroll_list = None
 root_display = None
-root_folder = r"C:\Users\Romeo.Delinicolas\Documents\maya\scripts\VFX-Tool-Collection\asset_final\published\assets"
+repository_root = ""
+root_folder = f"{repository_root}\asset_final\published\assets"
 text_fields = []  
 standard_focal_lengths = (12, 14, 16, 18, 21, 25, 27, 32, 35, 40, 50, 65, 75, 100, 135, 150)
 standard_fstop_values = (1.3, 2, 2.8, 4, 5.6, 8, 11, 16, 22)
