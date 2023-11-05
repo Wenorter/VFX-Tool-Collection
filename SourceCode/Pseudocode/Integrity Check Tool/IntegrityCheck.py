@@ -355,7 +355,7 @@ def create_ui():
     check_nan_row = cmds.rowLayout(numberOfColumns=3, columnWidth3=(column1_width, column2_width, column3_width))
     nan_values_label = cmds.text(label="Check Nan Values")
     text_fields.append(nan_values_label)
-    cmds.button(label="Run Check", command=lambda *args: run_check(check_nan_values, nan_values_label, check_nan_row))
+    cmds.button(label="Run Check", command=lambda *args: run_check(check_nan_values, nan_values_label))
     cmds.setParent('..')  
 
     reference_errors_row = cmds.rowLayout(numberOfColumns=3, columnWidth3=(column1_width, column2_width, column3_width))
